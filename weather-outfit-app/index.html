@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraWear — Smart Weather & Outfit Stylist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-mood="sunny_warm">
+
+  <!-- Ambient Dynamic Canvas (Renders rain, snow, or sunshine rays) -->
+  <canvas id="ambientCanvas"></canvas>
+
+  <div class="app-wrapper">
+
+    <!-- Top Navigation -->
+    <header class="header-nav">
+      <a href="#" class="brand">
+        <div class="brand-icon">✨</div>
+        <div class="brand-text">
+          <h1>AuraWear</h1>
+          <p>Smart Outfit & Weather Stylist</p>
+        </div>
+      </a>
+
+      <!-- City Search & Geolocation -->
+      <div class="search-container">
+        <div class="search-input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="citySearchInput" class="search-input" placeholder="Search city (e.g. Paris, Tokyo, New York)..." autocomplete="off">
+          <button id="geoBtn" class="geo-btn" title="Use Current GPS Location">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+            </svg>
+          </button>
+        </div>
+        <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="nav-actions">
+        <button id="unitToggleBtn" class="action-btn unit-toggle" title="Toggle °C / °F">
+          <span id="unitLabel">°C</span>
+        </button>
+        <button id="ambientAudioBtn" class="action-btn" title="Play ambient weather sound">
+          <span>🎵 Sound: Off</span>
+        </button>
+        <button id="wardrobeModalBtn" class="action-btn" title="Manage your personal closet items">
+          <span>👔 My Closet</span>
+        </button>
+        <button id="savedLooksBtn" class="action-btn" title="View saved looks">
+          <span>⭐ Saved</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Weather Hero Section -->
+    <section class="weather-hero">
+      <div class="weather-banner-card">
+        <div class="location-meta">
+          <div class="location-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <h2 id="locationCityName">Loading...</h2>
+          </div>
+          <div id="weatherLocalTime" class="weather-time">Today, Local Time</div>
+        </div>
+
+        <div class="weather-main-display">
+          <div id="mainTempDisplay" class="temp-large">--°</div>
+          <div class="condition-summary">
+            <div class="condition-badge">
+              <span id="weatherIcon">⛅</span>
+              <span id="weatherConditionText">Checking skies...</span>
+            </div>
+            <div id="feelsLikePill" class="feels-like-pill">Feels like --°</div>
+          </div>
+        </div>
+
+        <div class="weather-stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">Humidity</span>
+            <span id="statHumidity" class="stat-value">--%</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Wind Speed</span>
+            <span id="statWind" class="stat-value">-- km/h</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Rain Chance</span>
+            <span id="statPrecip" class="stat-value">--%</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Max UV Index</span>
+            <span id="statUV" class="stat-value">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stylist Insight & Palette Box -->
+      <div class="stylist-insight-card">
+        <div>
+          <div class="insight-header">
+            <span class="insight-title">
+              <span>🎯 Stylist Compatibility</span>
+            </span>
+            <span id="scoreBadge" class="score-badge">98% Fit</span>
+          </div>
+
+          <div class="thermal-tag">
+            <span class="thermal-tag-label">Thermal Climate Band:</span>
+            <span id="thermalBandText" class="thermal-tag-val">Analyzing...</span>
+          </div>
+
+          <p id="quickStylistSummary" style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.45;">
+            Fine-tuning layers based on humidity, cloud cover, and wind resistance...
+          </p>
+        </div>
+
+        <div class="palette-block">
+          <div class="palette-label">
+            <span>Recommended Weather Palette</span>
+            <span id="paletteName" style="color: var(--accent-primary);">Earth & Sky</span>
+          </div>
+          <div id="paletteSwatches" class="palette-swatches">
+            <!-- Dynamic swatches -->
+          </div>
+          <div id="paletteDesc" class="palette-desc">Harmonious color combinations for today.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Style Preference Filters -->
+    <section class="preferences-bar">
+      <!-- Occasion / Style -->
+      <div class="pref-group">
+        <span class="pref-label">Occasion:</span>
+        <div class="segmented-control" id="styleSelector">
+          <button class="seg-btn active" data-style="casual">Casual</button>
+          <button class="seg-btn" data-style="smart-casual">Smart Casual</button>
+          <button class="seg-btn" data-style="formal">Formal</button>
+          <button class="seg-btn" data-style="active">Activewear</button>
+          <button class="seg-btn" data-style="lounge">Loungewear</button>
+        </div>
+      </div>
+
+      <!-- Wardrobe Orientation -->
+      <div class="pref-group">
+        <span class="pref-label">Vibe:</span>
+        <div class="segmented-control" id="genderSelector">
+          <button class="seg-btn active" data-gender="all">All / Neutral</button>
+          <button class="seg-btn" data-gender="masculine">Men's</button>
+          <button class="seg-btn" data-gender="feminine">Women's</button>
+        </div>
+      </div>
+
+      <!-- Cold Sensitivity -->
+      <div class="pref-group">
+        <span class="pref-label">Sensitivity:</span>
+        <div class="segmented-control" id="sensitivitySelector">
+          <button class="seg-btn" data-sens="runs_cold" title="I feel colder than most people (+3°C extra warmth)">❄️ Cold</button>
+          <button class="seg-btn active" data-sens="normal">⚖️ Normal</button>
+          <button class="seg-btn" data-sens="runs_hot" title="I get hot easily (-3°C lighter clothing)">🔥 Warm</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- The Curated Outfit Grid -->
+    <section class="outfit-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">
+            <span>👔 Today's Tailored Look</span>
+          </h2>
+          <p class="section-desc">Hand-picked pieces engineered for current temperature, rain risk, and wind chill.</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="saveOutfitBtn" class="action-btn" title="Save this look to your favorites">
+            <span>⭐ Save Look</span>
+          </button>
+          <button id="copyChecklistBtn" class="action-btn" title="Copy outfit checklist to clipboard">
+            <span>📋 Copy List</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="outfit-grid" id="outfitCardsContainer">
+        <!-- Dynamic Cards: Outerwear, Top, Bottom, Footwear -->
+      </div>
+
+      <!-- Accessories Banner -->
+      <div class="accessories-section">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 style="font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
+            Essential Weather Accessories & Extras
+          </h3>
+          <span style="font-size: 0.75rem; color: var(--accent-primary);">Automatically paired</span>
+        </div>
+        <div class="accessories-list" id="accessoriesListContainer">
+          <!-- Chips: Umbrella, Sunglasses, Beanie, Scarf, etc. -->
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Stylist Advice Cards -->
+    <section class="stylist-advice-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">
+            <span>💡 Why This Outfit? (Stylist Analysis)</span>
+          </h2>
+          <p class="section-desc">The science and styling logic behind your personalized outfit.</p>
+        </div>
+      </div>
+
+      <div class="stylist-advice-grid" id="stylistAdviceContainer">
+        <!-- Cards generated dynamically -->
+      </div>
+    </section>
+
+    <!-- 24-Hour Timeline -->
+    <section class="timeline-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">
+            <span>⏱️ 24-Hour Outfit & Weather Timeline</span>
+          </h2>
+          <p class="section-desc">Plan your commute and evening outings with hour-by-hour temperature shifts.</p>
+        </div>
+      </div>
+      <div class="timeline-scroller" id="hourlyTimelineScroller">
+        <!-- 24 hourly pill cards -->
+      </div>
+    </section>
+
+    <!-- 7-Day Forecast & Trip Packing Planner -->
+    <section class="secondary-grid">
+      <!-- 7-Day Forecast -->
+      <div class="forecast-card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 4px;">7-Day Weather Outlook</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Anticipate the week's upcoming wardrobe shifts.</p>
+        <div class="forecast-list" id="dailyForecastList">
+          <!-- 7 day rows -->
+        </div>
+      </div>
+
+      <!-- Packing Planner -->
+      <div class="packing-card">
+        <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 4px;">🧳 Trip Packing Assistant</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Heading out for a weekend or multi-day trip? Generate a weather-smart suitcase list.</p>
+        
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span style="font-size: 0.82rem; color: var(--text-muted);">Trip length:</span>
+          <button class="seg-btn active trip-day-btn" data-days="3">3 Days (Weekend)</button>
+          <button class="seg-btn trip-day-btn" data-days="5">5 Days</button>
+          <button class="seg-btn trip-day-btn" data-days="7">7 Days</button>
+        </div>
+
+        <button id="generatePackingBtn" class="packing-btn">
+          <span>🎒 Generate Packing Checklist</span>
+        </button>
+
+        <div id="packingListOutput" class="packing-preview">
+          <!-- Dynamic packing list items -->
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- SWAP MODAL -->
+  <div id="swapModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="swapModalTitle">Swap Item</h3>
+        <button class="modal-close-btn" id="closeSwapModalBtn">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        Choose an alternative piece suited for today's weather:
+      </p>
+      <div id="swapOptionsContainer" class="swap-options-grid">
+        <!-- Rendered options -->
+      </div>
+    </div>
+  </div>
+
+  <!-- WARDROBE MANAGER MODAL -->
+  <div id="wardrobeModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>👔 My Personal Wardrobe</h3>
+        <button class="modal-close-btn" id="closeWardrobeModalBtn">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+        Check the items you own in your closet. AuraWear will tailor recommendations specifically to your wardrobe:
+      </p>
+      <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+        <button id="selectAllClosetBtn" class="action-btn" style="font-size: 0.75rem;">Select All</button>
+        <button id="resetClosetBtn" class="action-btn" style="font-size: 0.75rem;">Default Catalog</button>
+      </div>
+      <div id="wardrobeManagerContainer" class="wardrobe-manage-list">
+        <!-- Checkboxes for all items -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVED LOOKS MODAL -->
+  <div id="savedLooksModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>⭐ Saved Outfits</h3>
+        <button class="modal-close-btn" id="closeSavedModalBtn">&times;</button>
+      </div>
+      <div id="savedLooksContainer" style="display: flex; flex-direction: column; gap: 12px;">
+        <!-- Saved looks -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Script Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
